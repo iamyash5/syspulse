@@ -1,0 +1,28 @@
+@startuml architecture
+
+skinparam componentStyle rectangle
+title SysPulse — Architecture Diagram
+
+package "Linux Kernel" {
+  [procfs: /proc/stat] as procStat
+  [procfs: /proc/meminfo] as procMem
+}
+
+package "SysPulse Daemon (syspulsed)" {
+  [Monitor Thread] as monitor
+  [Shared State\n(mutex-protected)] as state
+  [UNIX Socket Server] as server
+}
+
+package "CLI Client" {
+  [syspulsectl] as cli
+}
+
+procStat --> monitor : read CPU times
+procMem  --> monitor : read mem info
+monitor  --> state   : update cpu%, mem%, alert
+server   --> state   : read/update on command
+cli      --> server  : STATUS / SET_THRESHOLD\n(over /tmp/syspulse.sock)
+server   --> cli     : response text
+
+@enduml
